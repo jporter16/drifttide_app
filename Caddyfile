@@ -1,0 +1,10 @@
+music.drift-tide.com {
+    reverse_proxy navidrome:4533
+}
+
+files.drift-tide.com {
+    reverse_proxy filebrowser:80
+}
+chat.drift-tide.com {
+    reverse_proxy open-webui:8080
+}

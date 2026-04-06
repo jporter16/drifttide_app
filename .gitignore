@@ -1,0 +1,10 @@
+caddy-data/
+caddy-config/
+navidrome-config/
+open-webui-data/
+filebrowser.db
+filebrowser-config.json
+.env
+.env*
+*.env
+*.save

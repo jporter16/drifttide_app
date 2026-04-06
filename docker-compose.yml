@@ -1,0 +1,49 @@
+services:
+  navidrome:
+    image: deluan/navidrome
+    restart: unless-stopped
+    expose:
+      - "4533"
+    volumes:
+      - ./navidrome-config:/data
+      - /mnt/drifttide_volume/music_sync:/music:ro
+    environment:
+      ND_SCANSCHEDULE: 1h
+      ND_LOGLEVEL: info
+      ND_BASEURL: ""
+
+  filebrowser:
+    image: filebrowser/filebrowser
+    restart: unless-stopped
+    expose:
+      - "80"
+    volumes:
+      - /mnt/drifttide_volume/music_sync:/srv
+      - ./filebrowser-config.json:/config.json
+      - /home/tide/drifttide_app/filebrowser.db:/database.db
+    command: --database /database.db --config /config.json
+  seashell:
+    build: ./seashell
+    restart: unless-stopped
+    env_file:
+      - ./seashell/.env
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://seashell:3000/v1
+      - OPENAI_API_KEY=not-needed
+    volumes:
+      - ./open-webui-data:/app/backend/data
+  caddy:
+    image: caddy:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy-data:/data
+      - ./caddy-config:/config
