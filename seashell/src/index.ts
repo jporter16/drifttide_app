@@ -1,12 +1,62 @@
 import dotenv from "dotenv";
 dotenv.config();
 import express, { Request, Response } from "express";
-import { sendMessage, Message } from "./chat";
+import { sendMessage } from "./chat";
+import OpenAI from "openai";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
+const SEARXNG_URL = process.env.SEARXNG_URL ?? "http://searxng:8080";
 
+const tools: OpenAI.Chat.ChatCompletionTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description:
+        "Search the web for current, up-to-date information. Use this for recent events, news, research, or anything that may have changed.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+];
+
+export type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "video_url"; video_url: { url: string } };
+
+export type Message = OpenAI.Chat.ChatCompletionMessageParam;
 // Increase limit for base64 image/video payloads
+
+async function runWebSearch(query: string): Promise<string> {
+  const params = new URLSearchParams({
+    q: query,
+    format: "json",
+    categories: "general",
+    language: "en",
+  });
+
+  const res = await fetch(`${SEARXNG_URL}/search?${params}`);
+  if (!res.ok) throw new Error(`SearXNG error: ${res.status}`);
+
+  const data = (await res.json()) as {
+    results: { title: string; url: string; content: string }[];
+  };
+
+  if (!data.results?.length) return "No results found.";
+
+  return data.results
+    .slice(0, 5)
+    .map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.content}`)
+    .join("\n\n");
+}
+
 app.use(express.json({ limit: "50mb" }));
 
 // Original endpoint

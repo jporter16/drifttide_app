@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { Message } from ".";
 
 const client = new OpenAI({
   baseURL: `${process.env.MODAL_URL}/v1`,
@@ -15,8 +16,6 @@ export type ContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } }
   | { type: "video_url"; video_url: { url: string } };
-
-export type Message = OpenAI.Chat.ChatCompletionMessageParam;
 
 export async function sendMessage(messages: Message[]): Promise<string> {
   const response = await client.chat.completions.create({
