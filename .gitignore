@@ -8,3 +8,4 @@ filebrowser-config.json
 .env*
 *.env
 *.save
+.DS_Store
