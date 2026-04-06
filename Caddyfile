@@ -1,5 +1,5 @@
 (private) {
-    basicauth {
+    basic_auth {
         drifttide $2a$14$KFE9BUn9a5cC21gWJwEaqewgAtD4db.YGkHZkJbnuBT6DJ7uYNpoe
     }
 }
