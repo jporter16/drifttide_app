@@ -7,4 +7,4 @@ RUN apt-get update && apt-get install -y python3 python3-pip --no-install-recomm
 WORKDIR /app
 EXPOSE 8000
 
-CMD ["python3", "-m", "mcpo", "--port", "8000", "--config", "/app/config.json"]
+CMD ["mcpo", "--port", "8000", "--config", "/app/config.json"]
