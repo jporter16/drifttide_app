@@ -1,3 +1,9 @@
+(private) {
+    basicauth {
+        {env.CADDY_USERNAME} {env.CADDY_HASHED_PASSWORD}
+    }
+}
+
 music.drift-tide.com {
     reverse_proxy navidrome:4533
 }
@@ -7,4 +13,8 @@ files.drift-tide.com {
 }
 chat.drift-tide.com {
     reverse_proxy open-webui:8080
+}
+search.drift-tide.com {
+    import private
+    reverse_proxy searxng:8080
 }

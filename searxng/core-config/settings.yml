@@ -1,0 +1,17 @@
+use_default_settings: true
+
+server:
+  # paste your generated secret key Since this is only used for sessings, it sounds like this is okay to be in git.
+  secret_key: "db492378db24f59e5e1dca5b310e56bacc88bee37bd8a8d9d9cb41f17a1faa34"
+  limiter: false # no rate limiting since only seashell talks to this
+  image_proxy: false
+
+search:
+  safe_search: 0
+  default_lang: "en"
+  formats:
+    - html
+    - json # critical — disabled by default, seashell needs this
+
+outgoing:
+  request_timeout: 6.0

@@ -9,3 +9,5 @@ filebrowser-config.json
 *.env
 *.save
 .DS_Store
+caddy.env
+seashell/.env
