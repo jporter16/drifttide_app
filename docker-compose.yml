@@ -54,7 +54,9 @@ services:
     volumes:
       - valkey-data:/data/
   mcpo:
-    build: ./mcpo
+    build:
+      context: .
+      dockerfile: Dockerfile.mcpo
     restart: unless-stopped
     expose:
       - "8000"
