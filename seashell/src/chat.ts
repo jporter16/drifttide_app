@@ -9,7 +9,7 @@ const client = new OpenAI({
   },
 });
 
-const MODEL = "mistralai/Ministral-3-14B-Instruct-2512";
+export const MODEL = "mistralai/Ministral-3-14B-Instruct-2512";
 const SEARXNG_URL = "http://searxng:8080";
 export type Message = OpenAI.Chat.ChatCompletionMessageParam;
 const tools: OpenAI.Chat.ChatCompletionTool[] = [
@@ -58,7 +58,8 @@ export type ContentPart =
   | { type: "image_url"; image_url: { url: string } }
   | { type: "video_url"; video_url: { url: string } };
 
-export async function sendMessage(messages: Message[]): Promise<string> {
+// Resolve tool calls and return the messages array ready for a final completion
+async function resolveToolCalls(messages: Message[]): Promise<Message[]> {
   let currentMessages: Message[] = [...messages];
 
   for (let round = 0; round < 5; round++) {
@@ -73,7 +74,6 @@ export async function sendMessage(messages: Message[]): Promise<string> {
 
     if (choice.finish_reason === "tool_calls" && choice.message.tool_calls) {
       currentMessages.push(choice.message);
-
       for (const toolCall of choice.message.tool_calls) {
         if (
           toolCall.type === "function" &&
@@ -92,9 +92,39 @@ export async function sendMessage(messages: Message[]): Promise<string> {
         }
       }
     } else {
-      return choice.message.content ?? "";
+      // No tool call — messages are ready for a final streaming pass
+      // Pop the assistant message; caller will stream it fresh
+      return currentMessages;
     }
   }
 
-  return "Reached max iterations without a final response.";
+  return currentMessages;
+}
+
+// Non-streaming (original behaviour)
+export async function sendMessage(messages: Message[]): Promise<string> {
+  const resolved = await resolveToolCalls(messages);
+  const response = await client.chat.completions.create({
+    model: MODEL,
+    messages: resolved,
+  });
+  return response.choices[0].message.content ?? "";
+}
+
+// Streaming: resolves tool calls, then yields SSE chunks from the final turn
+export async function* sendMessageStream(
+  messages: Message[]
+): AsyncGenerator<string> {
+  const resolved = await resolveToolCalls(messages);
+
+  const stream = await client.chat.completions.create({
+    model: MODEL,
+    messages: resolved,
+    stream: true,
+  });
+
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta?.content;
+    if (delta) yield delta;
+  }
 }
