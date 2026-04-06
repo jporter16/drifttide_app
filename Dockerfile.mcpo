@@ -1,0 +1,10 @@
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y python3 python3-pip --no-install-recommends \
+    && pip3 install mcpo --break-system-packages \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+EXPOSE 8000
+
+CMD ["python3", "-m", "mcpo", "--port", "8000", "--config", "/app/config.json"]
