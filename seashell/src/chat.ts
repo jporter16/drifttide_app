@@ -1,5 +1,14 @@
 import OpenAI from "openai";
+import { google } from "googleapis";
 
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET
+);
+oauth2Client.setCredentials({
+  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+});
+const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 const client = new OpenAI({
   baseURL: `${process.env.MODAL_URL}/v1`,
   apiKey: "not-needed",
@@ -28,6 +37,25 @@ const tools: OpenAI.Chat.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_calendar_events",
+      description:
+        "Fetch upcoming events from the user's Google Calendar. Use this when asked about schedule, appointments, meetings, or what's on the calendar.",
+      parameters: {
+        type: "object",
+        properties: {
+          days_ahead: {
+            type: "number",
+            description:
+              "How many days ahead to look (default 1 for today, 7 for this week)",
+          },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 async function runWebSearch(query: string): Promise<string> {
@@ -52,6 +80,44 @@ async function runWebSearch(query: string): Promise<string> {
     .map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.content}`)
     .join("\n\n");
 }
+async function getCalendarEvents(daysAhead: number = 1): Promise<string> {
+  const now = new Date();
+  const end = new Date();
+  end.setDate(now.getDate() + daysAhead);
+
+  const res = await calendar.events.list({
+    calendarId: "primary",
+    timeMin: now.toISOString(),
+    timeMax: end.toISOString(),
+    singleEvents: true,
+    orderBy: "startTime",
+    maxResults: 20,
+  });
+
+  const events = res.data.items;
+  if (!events || events.length === 0) {
+    return `No events found in the next ${daysAhead} day(s).`;
+  }
+
+  return events
+    .map((e) => {
+      const start = e.start?.dateTime ?? e.start?.date ?? "unknown time";
+      const end = e.end?.dateTime ?? e.end?.date ?? "";
+      const startFormatted = new Date(start).toLocaleString("en-US", {
+        timeZone: "America/Chicago", // adjust to your timezone
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `• ${e.summary ?? "Untitled"} — ${startFormatted}${
+        e.location ? ` @ ${e.location}` : ""
+      }`;
+    })
+    .join("\n");
+}
+
 // Content can be a simple string OR an array of parts (text, image, video)
 export type ContentPart =
   | { type: "text"; text: string }
@@ -84,6 +150,23 @@ async function resolveToolCalls(messages: Message[]): Promise<Message[]> {
           };
           console.log(`[web_search] "${args.query}"`);
           const result = await runWebSearch(args.query);
+          currentMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: result,
+          });
+        }
+        if (
+          toolCall.type === "function" &&
+          toolCall.function.name === "get_calendar_events"
+        ) {
+          const args = JSON.parse(toolCall.function.arguments) as {
+            days_ahead?: number;
+          };
+          console.log(
+            `[get_calendar_events] days_ahead=${args.days_ahead ?? 1}`
+          );
+          const result = await getCalendarEvents(args.days_ahead ?? 1);
           currentMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
