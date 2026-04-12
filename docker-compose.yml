@@ -18,7 +18,7 @@ services:
     expose:
       - "80"
     volumes:
-      - /mnt/drifttide_volume/music_sync:/srv
+      - /mnt/drifttide_volume:/srv
       - ./filebrowser-config.json:/config.json
       - /home/tide/drifttide_app/filebrowser.db:/database.db
     command: --database /database.db --config /config.json
