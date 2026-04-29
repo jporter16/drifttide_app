@@ -1,20 +1,28 @@
+{
+    auto_https off
+}
+
+
 (private) {
     basic_auth {
         drifttide $2a$14$KFE9BUn9a5cC21gWJwEaqewgAtD4db.YGkHZkJbnuBT6DJ7uYNpoe
     }
 }
 
-music.drift-tide.com {
+
+http://music.drift-tide.com {
     reverse_proxy navidrome:4533
 }
 
-files.drift-tide.com {
+http://files.drift-tide.com {
     reverse_proxy filebrowser:80
 }
-chat.drift-tide.com {
+
+http://chat.drift-tide.com {
     reverse_proxy open-webui:8080
 }
-search.drift-tide.com {
+
+http://search.drift-tide.com {
     import private
     reverse_proxy searxng:8080
 }

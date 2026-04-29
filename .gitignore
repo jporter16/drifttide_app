@@ -11,3 +11,5 @@ filebrowser-config.json
 .DS_Store
 caddy.env
 seashell/.env
+seashell/node_modules/
+beets-config/

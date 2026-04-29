@@ -6,7 +6,7 @@ services:
       - "4533"
     volumes:
       - ./navidrome-config:/data
-      - /mnt/drifttide_volume/music_sync:/music:ro
+      - C:\drifttide\storage\music:/music:ro
     environment:
       ND_SCANSCHEDULE: 1h
       ND_LOGLEVEL: info
@@ -18,9 +18,9 @@ services:
     expose:
       - "80"
     volumes:
-      - /mnt/drifttide_volume:/srv
+      - C:\drifttide\storage:/srv
       - ./filebrowser-config.json:/config.json
-      - /home/tide/drifttide_app/filebrowser.db:/database.db
+      - ./filebrowser.db:/database.db
     command: --database /database.db --config /config.json
   seashell:
     build: ./seashell
@@ -69,12 +69,16 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    env_file:
-      - ./caddy.env
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./caddy-data:/data
       - ./caddy-config:/config
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 volumes:
   searxng-data:
   valkey-data:
