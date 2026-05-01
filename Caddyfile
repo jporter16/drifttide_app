@@ -26,3 +26,6 @@ http://search.drift-tide.com {
     import private
     reverse_proxy searxng:8080
 }
+http://photos.drift-tide.com {
+    reverse_proxy immich-server:2283
+}
