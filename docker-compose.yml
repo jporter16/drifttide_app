@@ -79,6 +79,43 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    restart: unless-stopped
+    expose:
+      - "2283"
+    volumes:
+      - ./immich-data:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=immich-postgres
+      - DB_USERNAME=immich
+      - DB_PASSWORD=changeme
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=immich-redis
+    depends_on:
+      - immich-redis
+      - immich-postgres
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    restart: unless-stopped
+    volumes:
+      - ./immich-model-cache:/cache
+
+  immich-redis:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+
+  immich-postgres:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_USER=immich
+      - POSTGRES_DB=immich
+    volumes:
+      - ./immich-postgres:/var/lib/postgresql/data
 volumes:
   searxng-data:
   valkey-data:

@@ -14,5 +14,5 @@ Then SSH intto drifttide
 
 Beets is already configured in drifttide.
 
-If you are importing folders organized by album or artist, run this command: `beet import /mnt/drifttide_volume/music_import`
-If you are improting just mp3 files with not folders: `beet import -s /mnt/drifttide_volume/music_import`
+If you are importing folders organized by album or artist, run this command: `beet import C:\drifttide\storage\music_import`
+You will likely have to type U for use as-is.
